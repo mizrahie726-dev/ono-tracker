@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Ono מכינה"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#8DC63F"/>
+  <meta name="description" content="מעקב לימודים - מכינה אונו"/>
+
+  <!-- PWA Manifest inline -->
+  <link rel="manifest" href="data:application/json;charset=utf-8,{
+    %22name%22:%22Ono%20%D7%9E%D7%9B%D7%99%D7%A0%D7%94%22,
+    %22short_name%22:%22Ono%22,
+    %22start_url%22:%22.%22,
+    %22display%22:%22standalone%22,
+    %22background_color%22:%22%23ffffff%22,
+    %22theme_color%22:%22%238DC63F%22,
+    %22orientation%22:%22portrait%22,
+    %22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Ccircle cx='96' cy='96' r='96' fill='%238DC63F'/%3E%3Cpolygon points='75,55 145,96 75,137' fill='white'/%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]
+  }"/>
+
+  <!-- Apple Touch Icon (inline SVG as data URL) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%238DC63F'/><polygon points='68,50 140,90 68,130' fill='white'/><text x='90' y='158' text-anchor='middle' font-family='Heebo,Arial' font-size='22' font-weight='900' fill='white'>מכינה</text></svg>"/>
+
+  <title>Ono מכינה</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;overscroll-behavior:none}
+    body{font-family:'Heebo',sans-serif;background:#f0f2f5;color:#1a1a1a}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-thumb{background:#8DC63F55;border-radius:2px}
+    .card{background:#fff;border-radius:16px;border:1px solid #eee;box-shadow:0 2px 10px rgba(0,0,0,0.06);transition:all .2s}
+    .btn{border:none;cursor:pointer;border-radius:12px;font-family:'Heebo',sans-serif;font-weight:700;transition:all .18s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+    .btn:active{transform:scale(0.96)}
+    .btn-green{background:#8DC63F;color:#fff}
+    .btn-ghost{background:#f0f2f5;color:#555}
+    input,select,textarea{font-family:'Heebo',sans-serif;background:#f8f8f8;border:1.5px solid #e8e8e8;color:#222;border-radius:12px;padding:12px 14px;font-size:15px;outline:none;width:100%;transition:border-color .2s}
+    input:focus,select:focus,textarea:focus{border-color:#8DC63F;background:#fff;box-shadow:0 0 0 3px #8DC63F22}
+    input::placeholder,textarea::placeholder{color:#bbb}
+    select option{background:#fff;color:#222}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+    .sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+    .sheet-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 20px}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+    .chip{display:inline-flex;align-items:center;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e8e8e8;background:#fff;color:#888;font-family:'Heebo',sans-serif;transition:all .18s;white-space:nowrap}
+    .chip.active{background:#8DC63F;color:#fff;border-color:#8DC63F}
+    .chip:active{transform:scale(0.96)}
+    .bottom-nav{position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid #eee;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 20px rgba(0,0,0,0.08)}
+    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;gap:3px}
+    .nav-item:active{background:#f9f9f9}
+    .nav-icon{font-size:22px;line-height:1}
+    .nav-label{font-size:10px;font-weight:600}
+    .progress-bar{background:#eee;border-radius:6px;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#6fa52e,#8DC63F);border-radius:6px;transition:width .4s ease}
+    .task-row{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:#fff;margin-bottom:8px;border:1.5px solid #f0f0f0;transition:all .2s}
+    .task-row:active{background:#f9fff5}
+    .circle-check{width:26px;height:26px;border-radius:50%;border:2px solid #ddd;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;cursor:pointer}
+    .circle-check.done{background:#8DC63F;border-color:#8DC63F}
+    .section-title{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+    .section-bar{width:3px;height:20px;background:#8DC63F;border-radius:2px;flex-shrink:0}
+    .grade-input{width:76px;background:#f8f8f8;border:1.5px solid #eee;color:#222;border-radius:10px;padding:8px 10px;font-size:16px;font-weight:700;font-family:'Heebo',sans-serif;outline:none;text-align:center;transition:border-color .2s}
+    .grade-input:focus{border-color:#8DC63F;background:#fff}
+    .confetti-piece{position:fixed;pointer-events:none;animation:confetti-fall 1.4s ease-in forwards;z-index:999}
+    @keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+    .pulse{animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .slide-up{animation:slideUp .28s ease}
+    @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .offline-bar{display:none;background:#ff8c00;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700}
+    .offline-bar.show{display:block}
+    #install-banner{display:none;position:fixed;bottom:80px;left:14px;right:14px;background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:150;border:2px solid #8DC63F;animation:slideUp .3s ease}
+  </style>
+</head>
+<body>
+<div class="offline-bar" id="offline-bar">⚡ אין חיבור לאינטרנט — האפליקציה עובדת אופליין</div>
+<div id="install-banner">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="font-weight:900;font-size:16px">📱 הוסף למסך הבית</span>
+    <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa">✕</button>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px">לחץ על שיתוף 📤 ואז "הוסף למסך הבית" כדי להשתמש כאפליקציה</p>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:#8DC63F;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;width:100%">הבנתי!</button>
+</div>
+<div id="root"></div>
+
+<script>
+// ── Service Worker (offline support) ──
+if('serviceWorker' in navigator){
+  const sw=`
+    const CACHE='ono-v1';
+    const ASSETS=[
+      'https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap',
+      'https://unpkg.com/react@18/umd/react.production.min.js',
+      'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+      'https://unpkg.com/@babel/standalone/babel.min.js'
+    ];
+    self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>{})));self.skipWaiting()});
+    self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
+    self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res.ok){const c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c))}return res}).catch(()=>caches.match(e.request))))});
+  `;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  const url=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(()=>{});
+}
+
+// ── Offline indicator ──
+window.addEventListener('online',()=>document.getElementById('offline-bar').classList.remove('show'));
+window.addEventListener('offline',()=>document.getElementById('offline-bar').classList.add('show'));
+
+// ── iOS install prompt ──
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone=window.navigator.standalone;
+if(isIOS&&!isStandalone&&!localStorage.getItem('banner-dismissed')){
+  setTimeout(()=>{document.getElementById('install-banner').style.display='block'},2000);
+  document.getElementById('install-banner').querySelector('button:last-child').addEventListener('click',()=>{
+    localStorage.setItem('banner-dismissed','1');
+  });
+}
+
+// ── Android install prompt ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('install-banner').style.display='block';
+  document.getElementById('install-banner').querySelector('button:last-child').addEventListener('click',async()=>{
+    document.getElementById('install-banner').style.display='none';
+    deferredPrompt.prompt();
+    deferredPrompt=null;
+  });
+});
+</script>
+
+<script type="text/babel">
+const G="#8DC63F",GD="#6fa52e";
+const SEMESTER_END=new Date("2025-11-25");
+
+const COURSES=[
+  {id:1,code:"6142",name:"מיומנויות מחשב ב",   short:"מחשב",      day:"שלישי",time:"18:00-20:15",format:"ZOOM",      color:"#4A90E2"},
+  {id:2,code:"7861",name:"Basic English",        short:"English",   day:null,   time:"",            format:"E-Learning",color:"#E2A84A"},
+  {id:3,code:"7863",name:"מבוא לסטטיסטיקה",    short:"סטטיסטיקה", day:"רביעי",time:"18:30-20:00",format:"ZOOM",      color:"#9B59B6"},
+  {id:4,code:"7864",name:"אנגלית (ב)",          short:"אנגלית",    day:"ראשון",time:"19:15-22:15",format:"ZOOM",      color:"#E2A84A"},
+  {id:5,code:"8559",name:"חינוך פיננסי מקוון",  short:"פיננסי",    day:null,   time:"",            format:"E-Learning",color:"#27AE60"},
+  {id:6,code:"2910",name:"משפט, חברה ועסקים",  short:"משפט",      day:"שלישי",time:"16:15-17:45",format:"ZOOM",      color:"#E24A4A"},
+  {id:7,code:"6104",name:"מתמטיקה (ד)",         short:"מתמטיקה",   day:"ראשון",time:"16:00-19:00",format:"ZOOM",      color:"#F39C12"},
+  {id:8,code:"6105",name:"מתמטיקה (ה)",         short:"מת׳ ה",     day:null,   time:"",            format:"E-Learning",color:"#F39C12"},
+  {id:9,code:"6120",name:"חקר אוריינות ומדיה",  short:"מדיה",      day:"רביעי",time:"20:15-21:45",format:"ZOOM",      color:"#16A085"},
+  {id:10,code:"6140",name:"מיומנויות אקדמיות (ד)",short:"אקדמיות", day:"רביעי",time:"16:00-18:15",format:"ZOOM",      color:"#8DC63F"},
+  {id:11,code:"9673",name:"מבוא לפסיכולוגיה",   short:"פסיכולוגיה",day:null,   time:"",            format:"E-Learning",color:"#FD79A8"},
+];
+
+const DAYS=["ראשון","שני","שלישי","רביעי","חמישי"];
+const TYPE_COLOR={עבודה:"#4A90E2",מבחן:"#E24A4A",בוחן:"#F39C12",פרויקט:"#8DC63F","שיעורי בית":"#9B59B6",אחר:"#888"};
+const TYPE_EMOJI={עבודה:"📝",מבחן:"📋",בוחן:"✏️",פרויקט:"🗂️","שיעורי בית":"📖",אחר:"📌"};
+const TYPES=["עבודה","מבחן","בוחן","שיעורי בית","פרויקט","אחר"];
+
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+function fireConfetti(){
+  const colors=[G,GD,"#FFD700","#FF6B6B","#4A90E2","#FD79A8"];
+  for(let i=0;i<35;i++){
+    const el=document.createElement("div");
+    el.className="confetti-piece";
+    const size=6+Math.random()*8;
+    el.style.cssText=`left:${Math.random()*100}vw;top:10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${size}px;height:${size}px;border-radius:${Math.random()>.5?"50%":"2px"};animation-delay:${Math.random()*.5}s;animation-duration:${1.2+Math.random()*.8}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2500);
+  }
+}
+
+function App(){
+  const [tab,setTab]=React.useState("home");
+  const [tasks,setTasks]=React.useState(()=>load("ono-tasks-v4",[]));
+  const [grades,setGrades]=React.useState(()=>load("ono-grades-v2",{}));
+  const [attendance,setAttendance]=React.useState(()=>load("ono-attend-v2",{}));
+  const [notes,setNotes]=React.useState(()=>load("ono-notes-v2",{}));
+  const [modal,setModal]=React.useState(null);
+  const [editTask,setEditTask]=React.useState(null);
+  const [activeCourse,setActiveCourse]=React.useState(null);
+  const [taskFilter,setTaskFilter]=React.useState("הכל");
+  const [sortBy,setSortBy]=React.useState("date");
+
+  React.useEffect(()=>save("ono-tasks-v4",tasks),[tasks]);
+  React.useEffect(()=>save("ono-grades-v2",grades),[grades]);
+  React.useEffect(()=>save("ono-attend-v2",attendance),[attendance]);
+  React.useEffect(()=>save("ono-notes-v2",notes),[notes]);
+
+  const today=new Date();
+  const jsDay=today.getDay();
+  const heIdx=jsDay===0?6:jsDay-1;
+  const heDay=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"][heIdx];
+  const daysLeft=Math.max(0,Math.ceil((SEMESTER_END-today)/86400000));
+
+  const getDL=(d)=>Math.ceil((new Date(d)-today)/86400000);
+  const urgColor=(d)=>d<0?"#E24A4A":d<=3?"#FF8C00":d<=7?"#F39C12":G;
+
+  const addTask=(t)=>{setTasks(p=>[...p,{...t,id:Date.now(),done:false}]);setModal(null)};
+  const updTask=(id,f)=>setTasks(p=>p.map(t=>t.id===id?{...t,...f}:t));
+  const delTask=(id)=>{if(window.confirm("למחוק משימה?"))setTasks(p=>p.filter(t=>t.id!==id))};
+  const toggleDone=(id)=>{const t=tasks.find(t=>t.id===id);if(t&&!t.done)fireConfetti();updTask(id,{done:!t?.done})};
+
+  const courseTasks=(id)=>tasks.filter(t=>t.courseId==id);
+  const pending=tasks.filter(t=>!t.done);
+  const upcoming=pending.filter(t=>t.dueDate).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate));
+  const overdue=upcoming.filter(t=>getDL(t.dueDate)<0);
+  const todayClasses=COURSES.filter(c=>c.day===heDay);
+  const avgGrade=()=>{const v=Object.values(grades).filter(g=>g&&!isNaN(+g));return v.length?Math.round(v.reduce((a,b)=>a+ +b,0)/v.length):null};
+
+  function TaskRow({t,onEdit,showCourse}){
+    const course=COURSES.find(c=>c.id==t.courseId);
+    const days=t.dueDate?getDL(t.dueDate):null;
+    const tc=TYPE_COLOR[t.type]||"#888";
+    return(
+      <div className="task-row" style={{opacity:t.done?.55:1,borderColor:t.priority&&!t.done?"#F39C1255":"#f0f0f0",position:"relative",overflow:"hidden"}}>
+        {t.priority&&!t.done&&<div style={{position:"absolute",top:0,right:0,width:3,height:"100%",background:"#F39C12"}}/>}
+        <div className={`circle-check${t.done?" done":""}`} onClick={()=>toggleDone(t.id)} style={{borderColor:t.done?G:"#ddd"}}>
+          {t.done&&<span style={{fontSize:13,color:"#fff",fontWeight:900}}>✓</span>}
+        </div>
+        <div style={{flex:1,minWidth:0}} onClick={onEdit}>
+          <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+            {t.priority&&!t.done&&<span style={{fontSize:12}}>🔥</span>}
+            <span style={{fontWeight:700,fontSize:15,textDecoration:t.done?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}</span>
+          </div>
+          <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+            <span className="badge" style={{background:tc+"22",color:tc}}>{TYPE_EMOJI[t.type]} {t.type}</span>
+            {showCourse&&course&&<span style={{fontSize:11,color:"#bbb"}}>{course.short}</span>}
+            {t.note&&<span style={{fontSize:11,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:90}}>{t.note}</span>}
+          </div>
+        </div>
+        <div style={{textAlign:"center",flexShrink:0,minWidth:48}}>
+          {days!==null&&!t.done&&<>
+            <div style={{fontWeight:900,fontSize:15,color:urgColor(days)}}>{days<0?"פג!":days===0?"היום":`${days}י׳`}</div>
+            <div style={{fontSize:10,color:"#ccc"}}>{new Date(t.dueDate).toLocaleDateString("he-IL",{day:"numeric",month:"numeric"})}</div>
+          </>}
+          {t.done&&<span style={{fontSize:18}}>✅</span>}
+        </div>
+        <button onClick={()=>delTask(t.id)} style={{background:"none",border:"none",color:"#ddd",cursor:"pointer",fontSize:17,padding:"4px 6px",flexShrink:0}}>✕</button>
+      </div>
+    );
+  }
+
+  function HomeTab(){
+    const todayUp=upcoming.filter(t=>getDL(t.dueDate)>=0);
+    return <div className="slide-up">
+      <div className="card" style={{padding:"20px",marginBottom:16,background:`linear-gradient(135deg,${G},${GD})`,color:"#fff",border:"none",borderRadius:20}}>
+        <div style={{fontSize:13,opacity:.85,marginBottom:4}}>{today.toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"})}</div>
+        <div style={{fontWeight:900,fontSize:20,marginBottom:14,lineHeight:1.3}}>
+          {overdue.length>0?`⚠️ יש ${overdue.length} משימות שעברו תאריך!`:todayUp.length>0?`יש לך ${todayUp.length} משימות פתוחות`:"✅ הכל בסדר! כל הכבוד 🎉"}
+        </div>
+        <div style={{display:"flex",gap:24}}>
+          <div><div style={{fontWeight:900,fontSize:28,lineHeight:1}}>{daysLeft}</div><div style={{fontSize:11,opacity:.8}}>ימים לסיום</div></div>
+          <div><div style={{fontWeight:900,fontSize:28,lineHeight:1}}>{pending.length}</div><div style={{fontSize:11,opacity:.8}}>משימות פתוחות</div></div>
+          {avgGrade()!=null&&<div><div style={{fontWeight:900,fontSize:28,lineHeight:1}}>{avgGrade()}</div><div style={{fontSize:11,opacity:.8}}>ממוצע</div></div>}
+        </div>
+      </div>
+
+      {todayClasses.length>0&&<>
+        <div className="section-title"><div className="section-bar"/><span style={{fontWeight:700,fontSize:16}}>השיעורים שלי היום</span></div>
+        {todayClasses.map(c=>(
+          <div key={c.id} className="card" style={{padding:"14px 16px",marginBottom:8,borderRight:`4px solid ${c.color}`,display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}
+            onClick={()=>{setActiveCourse(c);setModal("course")}}>
+            <div><div style={{fontWeight:700,fontSize:15}}>{c.name}</div><div style={{fontSize:13,color:"#999",marginTop:2}}>🕐 {c.time}</div></div>
+            <span style={{fontSize:22}}>📡</span>
+          </div>
+        ))}
+        <div style={{marginBottom:16}}/>
+      </>}
+
+      {todayClasses.length===0&&<div className="card" style={{padding:"14px 16px",marginBottom:16,textAlign:"center",color:"#ccc"}}>
+        <div style={{fontSize:22,marginBottom:4}}>🎉</div><div style={{fontSize:14}}>אין שיעורי ZOOM היום</div>
+      </div>}
+
+      {overdue.length>0&&<>
+        <div className="section-title"><div className="section-bar" style={{background:"#E24A4A"}}/><span style={{fontWeight:700,fontSize:16,color:"#E24A4A"}}>⚠️ עברו תאריך</span></div>
+        {overdue.map(t=><TaskRow key={t.id} t={t} onEdit={()=>{setEditTask(t);setModal("edit")}} showCourse/>)}
+        <div style={{marginBottom:12}}/>
+      </>}
+
+      {todayUp.slice(0,5).length>0&&<>
+        <div className="section-title"><div className="section-bar"/><span style={{fontWeight:700,fontSize:16}}>הגשות קרובות</span></div>
+        {todayUp.slice(0,5).map(t=><TaskRow key={t.id} t={t} onEdit={()=>{setEditTask(t);setModal("edit")}} showCourse/>)}
+      </>}
+
+      {tasks.length===0&&<div className="card" style={{padding:36,textAlign:"center",marginBottom:16,borderColor:"#8DC63F33",borderStyle:"dashed",borderWidth:2}}>
+        <div style={{fontSize:40,marginBottom:10}}>📚</div>
+        <div style={{color:"#aaa",fontSize:15}}>לחץ על קורס בלוח השעות<br/>כדי להוסיף משימות</div>
+      </div>}
+
+      <button className="btn btn-green" onClick={()=>setModal("add")} style={{width:"100%",padding:16,fontSize:16,borderRadius:16,marginTop:4}}>
+        ＋ הוסף משימה / מבחן
+      </button>
+    </div>;
+  }
+
+  function ScheduleTab(){
+    return <div className="slide-up">
+      <div className="section-title"><div className="section-bar"/><span style={{fontWeight:700,fontSize:16}}>לוח שעות שבועי</span></div>
+      {DAYS.map(day=>{
+        const dc=COURSES.filter(c=>c.day===day);
+        if(!dc.length)return null;
+        const isToday=day===heDay;
+        return <div key={day} style={{marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <span style={{fontWeight:700,fontSize:15,color:isToday?G:"#666"}}>יום {day}</span>
+            {isToday&&<span className="badge" style={{background:G,color:"#fff"}}>היום</span>}
+          </div>
+          {[...dc].sort((a,b)=>(a.time||"").localeCompare(b.time||"")).map(c=>{
+            const ct=courseTasks(c.id);
+            const pct=ct.length?Math.round(ct.filter(t=>t.done).length/ct.length*100):0;
+            return <div key={c.id} className="card" style={{padding:"13px 14px",marginBottom:8,borderRight:`4px solid ${c.color}`,cursor:"pointer"}}
+              onClick={()=>{setActiveCourse(c);setModal("course")}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{c.name}</div>
+                  <div style={{fontSize:12,color:"#999",marginTop:3}}>🕐 {c.time} · {c.format}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+                  {grades[c.id]?<span className="badge" style={{background:`${G}22`,color:GD,fontSize:13,fontWeight:900}}>{grades[c.id]}</span>:null}
+                  {ct.length>0&&<span style={{fontSize:11,color:"#ccc"}}>{ct.length} משימות</span>}
+                </div>
+              </div>
+              {ct.length>0&&<div style={{marginTop:10}}><div className="progress-bar" style={{height:4}}><div className="progress-fill" style={{width:`${pct}%`}}/></div></div>}
+            </div>;
+          })}
+        </div>;
+      })}
+      <div style={{marginBottom:16}}>
+        <div style={{fontWeight:700,fontSize:15,color:"#666",marginBottom:10}}>🌐 E-Learning</div>
+        {COURSES.filter(c=>!c.day).map(c=>(
+          <div key={c.id} className="card" style={{padding:"13px 14px",marginBottom:8,borderRight:`4px solid ${c.color}`,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}
+            onClick={()=>{setActiveCourse(c);setModal("course")}}>
+            <div><div style={{fontWeight:700,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:"#999",marginTop:2}}>ללמידה עצמית</div></div>
+            {grades[c.id]?<span className="badge" style={{background:`${G}22`,color:GD,fontSize:13,fontWeight:900}}>{grades[c.id]}</span>:null}
+          </div>
+        ))}
+      </div>
+    </div>;
+  }
+
+  function TasksTab(){
+    const [showDone,setShowDone]=React.useState(false);
+    const base=taskFilter==="הכל"?tasks:tasks.filter(t=>t.type===taskFilter);
+    const pend=[...base.filter(t=>!t.done)].sort((a,b)=>{
+      if(sortBy==="priority")return (b.priority?1:0)-(a.priority?1:0);
+      if(sortBy==="course")return (COURSES.find(c=>c.id==a.courseId)?.name||"").localeCompare(COURSES.find(c=>c.id==b.courseId)?.name||"");
+      return new Date(a.dueDate||"9999")-new Date(b.dueDate||"9999");
+    });
+    const done=base.filter(t=>t.done);
+    return <div className="slide-up">
+      <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>
+        {["הכל",...TYPES].map(f=>(
+          <button key={f} className={`chip${taskFilter===f?" active":""}`} onClick={()=>setTaskFilter(f)}>{f}</button>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <span style={{fontSize:13,color:"#aaa"}}>{pend.length} פעילות · {done.length} הושלמו</span>
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{width:"auto",padding:"6px 12px",fontSize:13,borderRadius:10}}>
+          <option value="date">לפי תאריך</option>
+          <option value="priority">לפי עדיפות</option>
+          <option value="course">לפי קורס</option>
+        </select>
+      </div>
+      {pend.length===0&&done.length===0&&<div className="card" style={{padding:40,textAlign:"center",color:"#ccc"}}>
+        <div style={{fontSize:40,marginBottom:10}}>📭</div><div>אין משימות</div>
+      </div>}
+      {pend.map(t=><TaskRow key={t.id} t={t} onEdit={()=>{setEditTask(t);setModal("edit")}} showCourse/>)}
+      {done.length>0&&<>
+        <button className="btn btn-ghost" style={{width:"100%",padding:12,marginTop:4,marginBottom:8,fontSize:14}} onClick={()=>setShowDone(p=>!p)}>
+          {showDone?"▲":"▼"} הושלמו ({done.length})
+        </button>
+        {showDone&&done.map(t=><TaskRow key={t.id} t={t} onEdit={()=>{setEditTask(t);setModal("edit")}} showCourse/>)}
+      </>}
+      <button className="btn btn-green" onClick={()=>setModal("add")} style={{width:"100%",padding:16,fontSize:16,borderRadius:16,marginTop:12}}>
+        ＋ הוסף משימה
+      </button>
+    </div>;
+  }
+
+  function GradesTab(){
+    const avg=avgGrade();
+    return <div className="slide-up">
+      <div className="card" style={{padding:"20px",marginBottom:20,background:`linear-gradient(135deg,${G},${GD})`,color:"#fff",border:"none",borderRadius:20,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:13,opacity:.85,marginBottom:4}}>ממוצע כללי</div>
+          <div style={{fontWeight:900,fontSize:52,lineHeight:1}}>{avg||"—"}</div>
+          <div style={{fontSize:12,opacity:.7,marginTop:4}}>{Object.values(grades).filter(g=>g&&!isNaN(+g)).length} קורסים עם ציון</div>
+        </div>
+        <span style={{fontSize:60,opacity:.25}}>🎓</span>
+      </div>
+      {COURSES.map(c=>{
+        const ct=courseTasks(c.id);
+        const done=ct.filter(t=>t.done).length;
+        const pct=ct.length?Math.round(done/ct.length*100):0;
+        const att=attendance[c.id]||{present:0,absent:0};
+        const totalAtt=(att.present||0)+(att.absent||0);
+        const attPct=totalAtt?Math.round((att.present||0)/totalAtt*100):null;
+        return <div key={c.id} className="card" style={{padding:"16px",marginBottom:12,borderRight:`4px solid ${c.color}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:14}}>{c.name}</div>
+              <div style={{fontSize:11,color:"#bbb",marginTop:2}}>{c.code}</div>
+            </div>
+            <input type="number" className="grade-input" placeholder="ציון" value={grades[c.id]||""} min={0} max={100}
+              onChange={e=>setGrades(p=>({...p,[c.id]:e.target.value}))}/>
+          </div>
+          {ct.length>0&&<div style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#aaa",marginBottom:4}}>
+              <span>משימות</span><span style={{fontWeight:700,color:pct===100?G:"#aaa"}}>{done}/{ct.length} ({pct}%)</span>
+            </div>
+            <div className="progress-bar" style={{height:5}}><div className="progress-fill" style={{width:`${pct}%`}}/></div>
+          </div>}
+          {c.format==="ZOOM"&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid #f5f5f5"}}>
+            <span style={{fontSize:12,color:"#aaa"}}>נוכחות {attPct!=null?`${attPct}%`:""} · ✅{att.present||0} ❌{att.absent||0}</span>
+            <div style={{display:"flex",gap:6}}>
+              <button className="btn" onClick={()=>setAttendance(p=>({...p,[c.id]:{...att,present:(att.present||0)+1}}))}
+                style={{padding:"5px 10px",fontSize:12,background:"#e8f8e8",color:GD,borderRadius:8}}>+ הייתי</button>
+              <button className="btn" onClick={()=>setAttendance(p=>({...p,[c.id]:{...att,absent:(att.absent||0)+1}}))}
+                style={{padding:"5px 10px",fontSize:12,background:"#fee",color:"#e05050",borderRadius:8}}>+ חסרתי</button>
+            </div>
+          </div>}
+        </div>;
+      })}
+    </div>;
+  }
+
+  function CourseSheet(){
+    const c=activeCourse;
+    if(!c)return null;
+    const ct=courseTasks(c.id);
+    return <div className="overlay" onClick={e=>e.target===e.currentTarget&&setModal(null)}>
+      <div className="sheet">
+        <div className="sheet-handle"/>
+        <div style={{borderRight:`4px solid ${c.color}`,paddingRight:12,marginBottom:20}}>
+          <div style={{fontWeight:900,fontSize:20}}>{c.name}</div>
+          <div style={{fontSize:13,color:"#999",marginTop:4}}>{c.format==="E-Learning"?"🌐 E-Learning":`📅 יום ${c.day} | ${c.time}`}</div>
+        </div>
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:13,color:"#888",marginBottom:8,fontWeight:600}}>📓 הערות שלי</div>
+          <textarea rows={3} placeholder="כתוב הערות, תמצות שיעור, דברים לזכור..." value={notes[c.id]||""}
+            onChange={e=>setNotes(p=>({...p,[c.id]:e.target.value}))} style={{resize:"none",fontSize:14}}/>
+        </div>
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:13,color:"#888",marginBottom:8,fontWeight:600}}>ציון סופי</div>
+          <input type="number" placeholder="הכנס ציון (0-100)" value={grades[c.id]||""}
+            onChange={e=>setGrades(p=>({...p,[c.id]:e.target.value}))} style={{fontSize:18,fontWeight:700,textAlign:"center"}}/>
+        </div>
+        {ct.length>0&&<div style={{marginBottom:12}}>
+          <div style={{fontSize:13,color:"#888",marginBottom:8,fontWeight:600}}>משימות ({ct.length})</div>
+          {[...ct].sort((a,b)=>a.done-b.done||new Date(a.dueDate||"9999")-new Date(b.dueDate||"9999"))
+            .map(t=><TaskRow key={t.id} t={t} onEdit={()=>{setEditTask(t);setModal("edit")}}/>)}
+        </div>}
+        <button className="btn btn-green" onClick={()=>setModal("add")} style={{width:"100%",padding:14,fontSize:15}}>
+          ＋ הוסף משימה לקורס זה
+        </button>
+      </div>
+    </div>;
+  }
+
+  function TaskSheet(){
+    const isEdit=modal==="edit";
+    const [form,setForm]=React.useState(isEdit?{...editTask}:{courseId:activeCourse?.id||"",type:"עבודה",title:"",dueDate:"",note:"",priority:false});
+    const set=(k,v)=>setForm(p=>({...p,[k]:v}));
+    const submit=()=>{
+      if(!form.courseId||!form.title||!form.dueDate)return;
+      if(isEdit){updTask(form.id,form);setModal(null)}
+      else addTask(form);
+    };
+    return <div className="overlay" onClick={e=>e.target===e.currentTarget&&setModal(null)}>
+      <div className="sheet">
+        <div className="sheet-handle"/>
+        <div style={{fontWeight:900,fontSize:20,marginBottom:20}}>{isEdit?"✏️ עריכת משימה":"➕ משימה חדשה"}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <div style={{fontSize:13,color:"#888",marginBottom:6,fontWeight:600}}>קורס *</div>
+            <select value={form.courseId} onChange={e=>set("courseId",e.target.value)}>
+              <option value="">בחר קורס...</option>
+              {COURSES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <div style={{fontSize:13,color:"#888",marginBottom:8,fontWeight:600}}>סוג</div>
+            <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              {TYPES.map(tp=>(
+                <button key={tp} className={`chip${form.type===tp?" active":""}`} onClick={()=>set("type",tp)} style={{fontSize:13}}>
+                  {TYPE_EMOJI[tp]} {tp}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={{fontSize:13,color:"#888",marginBottom:6,fontWeight:600}}>כותרת *</div>
+            <input placeholder="למשל: תרגיל 3, מבחן אמצע..." value={form.title} onChange={e=>set("title",e.target.value)}/>
+          </div>
+          <div>
+            <div style={{fontSize:13,color:"#888",marginBottom:6,fontWeight:600}}>תאריך הגשה / מועד *</div>
+            <input type="date" value={form.dueDate} onChange={e=>set("dueDate",e.target.value)}/>
+          </div>
+          <div>
+            <div style={{fontSize:13,color:"#888",marginBottom:6,fontWeight:600}}>הערה (אופציונלי)</div>
+            <textarea rows={2} placeholder="פרטים נוספים..." value={form.note} onChange={e=>set("note",e.target.value)} style={{resize:"none"}}/>
+          </div>
+          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"13px 14px",background:form.priority?"#FFFBF0":"#f8f8f8",borderRadius:12,border:`1.5px solid ${form.priority?"#F39C12":"#eee"}`}}>
+            <input type="checkbox" checked={!!form.priority} onChange={e=>set("priority",e.target.checked)} style={{width:18,height:18,accentColor:"#F39C12",flexShrink:0}}/>
+            <span style={{fontWeight:600,fontSize:15}}>🔥 משימה דחופה / חשובה</span>
+          </label>
+          <div style={{display:"flex",gap:10,marginTop:4}}>
+            <button className="btn btn-ghost" onClick={()=>setModal(null)} style={{flex:1,padding:14,fontSize:15}}>ביטול</button>
+            <button className="btn btn-green" onClick={submit} style={{flex:2,padding:14,fontSize:16}}>{isEdit?"💾 שמור":"✓ הוסף"}</button>
+          </div>
+        </div>
+      </div>
+    </div>;
+  }
+
+  const TABS=[{id:"home",label:"בית",icon:"🏠"},{id:"schedule",label:"לוח שעות",icon:"📅"},{id:"tasks",label:"משימות",icon:"✅"},{id:"grades",label:"ציונים",icon:"🎓"}];
+
+  const navH=60+20; // nav + safe area approx
+  return <div dir="rtl" style={{fontFamily:"'Heebo',sans-serif",background:"#f0f2f5",minHeight:"100vh",color:"#1a1a1a",paddingBottom:navH}}>
+    <div style={{background:"#fff",borderBottom:`2px solid ${G}`,padding:"0 20px",position:"sticky",top:0,zIndex:50,boxShadow:"0 2px 12px rgba(0,0,0,0.07)",paddingTop:"env(safe-area-inset-top)"}}>
+      <div style={{maxWidth:600,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:54}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:30,height:30,borderRadius:"50%",background:G,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{fontSize:13,color:"#fff"}}>▶</span>
+          </div>
+          <span style={{fontWeight:900,fontSize:20,color:G,letterSpacing:-1}}>Ono</span>
+          <span style={{fontWeight:300,fontSize:12,color:"#ccc"}}>מכינה {today.getFullYear()}</span>
+        </div>
+        {overdue.length>0&&<span className="badge pulse" style={{background:"#fee",color:"#E24A4A",fontSize:12}}>⚠️ {overdue.length} פגו</span>}
+      </div>
+    </div>
+
+    <div style={{maxWidth:600,margin:"0 auto",padding:"18px 14px 10px"}}>
+      {tab==="home"&&<HomeTab/>}
+      {tab==="schedule"&&<ScheduleTab/>}
+      {tab==="tasks"&&<TasksTab/>}
+      {tab==="grades"&&<GradesTab/>}
+    </div>
+
+    <div className="bottom-nav">
+      <div style={{maxWidth:600,margin:"0 auto",display:"flex",width:"100%"}}>
+        {TABS.map(item=>(
+          <div key={item.id} className={`nav-item${tab===item.id?" active":""}`} onClick={()=>setTab(item.id)}>
+            <div className="nav-icon" style={{filter:tab===item.id?"none":"grayscale(1) opacity(0.4)"}}>{item.icon}</div>
+            <div className="nav-label" style={{color:tab===item.id?G:"#bbb"}}>{item.label}</div>
+            {tab===item.id&&<div style={{width:18,height:2.5,background:G,borderRadius:2}}/>}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {modal==="course"&&<CourseSheet/>}
+    {(modal==="add"||modal==="edit")&&<TaskSheet/>}
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
